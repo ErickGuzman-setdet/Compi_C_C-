@@ -19,6 +19,7 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "  -fl               Si el programa usa GSL y OpenMP al mismo tiempo"
     echo "  -n  --normal      Compila de forma normal el archivo"
     echo "  -p  --pthread     Es necesario para evitar errores en la compilacion con la libreria de <pthread.h>"
+	echo "  -G  --GLU	 	  Compila para GLU"
 	exit 0
 fi
 
@@ -67,8 +68,12 @@ case "$opcion" in
 	-p|--pthread)
 		$COMPILADOR "$archivo" -o "$salida" -pthread 2>err.log
 	;;
+	-G|--GLU)
+		$COMPILADOR "$archivo" -o "$salida" -lGL -lGLU -lglut -lm 2>err.log
+	;;
 	*)
 esac
+
 #Persiste un problema y es que, Que pasa si nosotros le pasamos un parametros que no corresponde con el archivo?
 #Esto puede llevar a que el programa falle entonces vamos a capturar ese error en un archivo y con el mismo metodo que hicimos para
 #detectar que tipo de opcion en base a palabras clave dentro de esa captura de error...
@@ -84,11 +89,18 @@ esac
 if [ $? -ne 0 ]; then
 	echo -e "Error: Opcion no correspodiente\n"
 	if grep -q "undefined reference" err.log; then
+
 		if grep -q "gsl_" err.log; then
 			echo -e "\nEl programa utiliza GSL...\n"
-			echo -e "Usa la opcion correcta: -l (solo GSL) o -fl (GSL + OpenMP)\n"
-		else
-			echo -e "Usa la opcion correcta: -f (solo OpenMP) o -fl (GSL + OpenMP)\n"
+			echo -e "Usa la opcion correcta: -l solo GSL o -fl GSL + OpenMP\n"
+
+		elif grep -q "GL/glut.h" err.log; then
+			echo -e "\nEL programa utiliza GL...\n"
+			echo -e "Usa la opcion correcta: -G o --GLU\n" 
+
+		else 
+			echo -e "Usa la opcion correcta: -f solo OpenMP o -fl GSL + OpenMP\n"
+			
 		fi
 	fi
 
@@ -100,6 +112,6 @@ else
 	echo -e "Compilacion finalizada...\n"
 	rm err.log
 fi
+
 echo -e "\n\n"
 ./"$salida"
-#echo -e "\n\n
